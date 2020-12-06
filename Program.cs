@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
+/*
 Puzzle_1_1();
 Puzzle_1_2();
 Puzzle_2_1();
@@ -14,6 +16,9 @@ Puzzle_4_1();
 Puzzle_4_2();
 Puzzle_5_1();
 Puzzle_5_2();
+*/
+Puzzle_6_1();
+Puzzle_6_2();
 
 static void Puzzle_1_1()
 {
@@ -218,6 +223,29 @@ static (int Row, int Column, int SeatId) Puzzle_5_ParseLine(string line)
     var column = Convert.ToInt32(line.Substring(7).Replace("L", "0").Replace("R", "1"), 2);
     var seatId = row * 8 + column;
     return (row, column, seatId);
+}
+
+static void Puzzle_6_1()
+{
+    var result = File.ReadAllText(@"input-06")
+        .Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
+        .Select(g => g.Where(char.IsLetter).Distinct().Count())
+        .Aggregate((a, x) => a + x);
+
+    Console.WriteLine(result);
+}
+
+static void Puzzle_6_2()
+{
+    var sum = File.ReadAllText(@"input-06")
+        .Split("\n\n", StringSplitOptions.RemoveEmptyEntries)
+        .Select(g => g.Split('\n')
+            .Select(p => p.Where(char.IsLetter))
+            .Aggregate((a,x) => a.Intersect(x))
+            .Count())
+        .Aggregate((a, x) => a + x);
+
+    Console.WriteLine(sum); 
 }
 
 public static class Ext
