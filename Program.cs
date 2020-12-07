@@ -16,9 +16,12 @@ Puzzle_4_1();
 Puzzle_4_2();
 Puzzle_5_1();
 Puzzle_5_2();
-*/
+
 Puzzle_6_1();
 Puzzle_6_2();
+*/
+Puzzle_7_1();
+Puzzle_7_2();
 
 static void Puzzle_1_1()
 {
@@ -246,6 +249,68 @@ static void Puzzle_6_2()
         .Aggregate((a, x) => a + x);
 
     Console.WriteLine(sum); 
+}
+
+static void Puzzle_7_1()
+{
+    var rules = File.ReadAllLines(@"input-07")
+        .Select(Puzzle_7_ParseRule)
+        .ToArray();
+
+    var results = new List<string>();
+    var queue = new Queue<(string Color, (int Count, string Color)[] Contains)>(
+        rules.Where(r => r.Contains.Any(c => c.Color == "shiny gold")));
+    while (queue.Count > 0)
+    {
+        var rule = queue.Dequeue();
+        if (results.Contains(rule.Color))
+        {
+            continue;
+        }
+        results.Add(rule.Color);
+        foreach(var sub in rules.Where(r => r.Contains.Any(c => c.Color == rule.Color)))
+        {
+            queue.Enqueue(sub);
+        }
+    }
+
+    Console.WriteLine(results.Count);
+}
+
+static void Puzzle_7_2()
+{
+    var rules = File.ReadAllLines(@"input-07")
+        .Select(Puzzle_7_ParseRule)
+        .ToArray();
+
+    int subCount(string color)
+    {
+        var rule = rules.Single(r => r.Color == color);
+        return rule.Contains.Sum(c => c.Count + c.Count * subCount(c.Color));
+    }
+
+    var count = subCount("shiny gold");
+    Console.WriteLine(count);
+}
+
+static (string Color, (int Count, string Color)[] Contains) Puzzle_7_ParseRule(string line)
+{
+    var parts = line.Split("bags contain", 2);
+    var color = parts[0].Trim();
+    if (parts[1].Any(char.IsNumber))
+    {
+        var contents = parts[1].Split(',').Select(x =>
+        {
+            var match = Regex.Match(x, @"(\d+)\s+(.*)\s+bag");
+            return (int.Parse(match.Groups[1].Value), match.Groups[2].Value);
+        }).ToArray();
+
+        return (color, contents);
+    }
+    else
+    {
+        return (color, new (int, string)[0]);
+    }
 }
 
 public static class Ext
