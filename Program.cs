@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 /*
@@ -16,12 +20,15 @@ Puzzle_4_1();
 Puzzle_4_2();
 Puzzle_5_1();
 Puzzle_5_2();
-
 Puzzle_6_1();
 Puzzle_6_2();
-*/
 Puzzle_7_1();
 Puzzle_7_2();
+Puzzle_8_1();
+Puzzle_8_2();
+*/
+//Puzzle_9_1();
+Puzzle_9_2();
 
 static void Puzzle_1_1()
 {
@@ -293,6 +300,42 @@ static void Puzzle_7_2()
     Console.WriteLine(count);
 }
 
+static void Puzzle_8_1()
+{
+    var instructions = File.ReadAllLines(@"input-08")
+        .Select(l => l.Trim().Split(' '))
+        .ToArray();
+    var line = 0;
+    var acc = 0;
+    var executedLines = new BitArray(instructions.Length);
+    while (true)
+    {
+        if (executedLines[line])
+        {
+            break;
+        }
+        executedLines.Set(line, true);
+        
+        var instruction = instructions[line];
+        var arg = int.Parse(instruction[1]);
+        switch (instruction[0])
+        {
+            case "nop":
+                line++;
+                break;
+            case "acc":
+                acc += arg;
+                line++;
+                break;
+            case "jmp":
+                line += arg;
+                break;
+        }
+    }
+
+    Console.WriteLine(acc);
+}
+
 static (string Color, (int Count, string Color)[] Contains) Puzzle_7_ParseRule(string line)
 {
     var parts = line.Split("bags contain", 2);
@@ -313,6 +356,132 @@ static (string Color, (int Count, string Color)[] Contains) Puzzle_7_ParseRule(s
     }
 }
 
+static void Puzzle_8_2()
+{
+    var instructions = File.ReadAllLines(@"input-08")
+       .Select(l => l.Trim().Split(' '))
+       .ToArray();
+
+    var acc = 0;
+    var lineToChange = 0;
+    while (true)
+    {
+        var line = 0;
+        acc = 0;
+        var executedLines = new BitArray(instructions.Length);
+        while (line < instructions.Length)
+        {
+            if (executedLines[line])
+            {
+                break;
+            }
+            executedLines.Set(line, true);
+
+            var instruction = instructions[line];
+            var cmd = instruction[0];
+            if (line == lineToChange)
+            {
+                cmd = instruction[0] switch
+                {
+                    "nop" => "jmp",
+                    "jmp" => "nop",
+                    string s => s
+                };
+            }
+
+            var arg = int.Parse(instruction[1]);
+            int nextLine;
+            switch (cmd)
+            {
+                case "nop":
+                    nextLine = line + 1;
+                    break;
+                case "acc":
+                    acc += arg;
+                    nextLine = line + 1;
+                    break;
+                case "jmp":
+                    nextLine = line + arg;
+                    break;
+                default:
+                    throw new Exception();
+            }
+
+            if(line == instructions.Length - 1)
+            {
+                break;
+            }
+            else
+            {
+                line = nextLine;
+            }
+        }
+
+        if (line == instructions.Length - 1)
+        {
+            break;
+        }
+        lineToChange++;
+    }
+
+    Console.WriteLine(acc);
+}
+
+static void Puzzle_9_1()
+{
+    var numbers = File.ReadAllLines(@"input-09")
+        .Select(l => long.Parse(l))
+        .ToArray();
+
+    var lineNumber = 25;
+    while (true)
+    {
+        var pairs = numbers
+            .Skip(lineNumber - 25)
+            .Take(25)
+            .ToCombinationsOf(2);
+        if(!pairs.Any(p => p[0] + p[1] == numbers[lineNumber]))
+        {
+            break;
+        }
+        lineNumber++;
+    }
+    Console.WriteLine(numbers[lineNumber]);
+}
+
+static void Puzzle_9_2()
+{
+    var invalidLine = 590;
+    var numbers = File.ReadAllLines(@"input-09")
+        .Select(l => long.Parse(l))
+        .ToArray();
+
+    var invalidNumber = numbers[invalidLine];
+    var startIndex = 0;
+    long min = 0, max = 0;
+    while (max == 0)
+    {
+        var count = 3;
+        while (true)
+        {
+            var selection = numbers.Skip(startIndex).Take(count);
+            var sum = selection.Sum();
+            if (sum == invalidNumber)
+            {
+                min = selection.Min();
+                max = selection.Max();
+            }
+            if (sum >= invalidNumber)
+            {
+                break;
+            }
+            count++;
+        }
+        startIndex++;
+    }
+    Console.WriteLine(min + max);
+}
+
 public static class Ext
 {
     public static IEnumerable<T[]> ToCombinationsOf<T>(this IEnumerable<T> items, int count)
@@ -323,14 +492,14 @@ public static class Ext
     {
         if (count == 1)
         {
-            for (var i = offset; i < items.Length - 1; i++)
+            for (var x = offset; x <= items.Length - 1; x++)
             {
-                yield return new T[] { items[i] };
+                yield return new T[] { items[x] };
             }
         }
         else
         {
-            for (var i = offset; i < items.Length - count; i++)
+            for (var i = offset; i <= items.Length - count; i++)
             {
                 foreach (var c in CreateCombinations(items, count - 1, i + 1))
                 {
