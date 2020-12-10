@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
+var sw = Stopwatch.StartNew();
 /*
 Puzzle_1_1();
 Puzzle_1_2();
@@ -26,9 +28,16 @@ Puzzle_7_1();
 Puzzle_7_2();
 Puzzle_8_1();
 Puzzle_8_2();
-*/
-//Puzzle_9_1();
+Puzzle_9_1();
 Puzzle_9_2();
+*/
+
+Puzzle_10_1();
+Puzzle_10_2();
+
+sw.Stop();
+
+Console.WriteLine(sw.Elapsed.TotalMilliseconds + " ms");
 
 static void Puzzle_1_1()
 {
@@ -480,6 +489,51 @@ static void Puzzle_9_2()
         startIndex++;
     }
     Console.WriteLine(min + max);
+}
+
+static void Puzzle_10_1()
+{
+    var adapters = File.ReadAllLines(@"input-10")
+        .Select(int.Parse)
+        .OrderBy(x => x)
+        .ToArray();
+
+    var differences = adapters.Skip(1).Select((a, i) => a - adapters[i]);
+    var diff1 = differences.Count(d => d == 1) + 1; // add the 0 -> 1
+    var diff3 = differences.Count(d => d == 3) + 1; // last adapter -> device
+
+    Console.WriteLine(diff1 * diff3);
+}
+
+static void Puzzle_10_2()
+{
+    var counters = File.ReadAllLines(@"input-10")
+        .Select(int.Parse)
+        .ToDictionary(x => x, x => 0L);
+
+    long calculateWaysToGetTarget(int target)
+    {
+        var count = 0L;
+        for(var previous = target - 1; previous >= target - 3; previous--)
+        {
+            if(previous == 0)
+            {
+                count++;
+            }
+            else if (counters.ContainsKey(previous))
+            {
+                if(counters[previous] == 0)
+                {
+                    counters[previous] = calculateWaysToGetTarget(previous);
+                }
+                count += counters[previous];
+            }
+        }
+        return count;
+    }
+    var target = counters.Keys.Max() + 3;
+    var count = calculateWaysToGetTarget(target);
+    Console.WriteLine(count);
 }
 
 public static class Ext
